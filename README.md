@@ -1,5 +1,68 @@
 # CPRA4CO — Continuous Parallel Relaxation for Diverse Combinatorial Optimization Solutions
 
+> [!IMPORTANT]
+> ## This repository has moved → use [**QQA4CO**](https://github.com/Yuma-Ichikawa/QQA4CO)
+>
+> **CPRA is now developed and maintained inside the unified
+> [QQA4CO](https://github.com/Yuma-Ichikawa/QQA4CO) toolkit.** The full
+> algorithm of this paper — multi-head GCN backbone, per-replica QUBO loss,
+> CRA penalty annealing, and the optional inter-replica diversity term —
+> has been ported there with **the same numerics**, plus best-so-far
+> tracking, batched per-replica evaluation, a CLI, a Streamlit dashboard,
+> and Blackwell (`sm_100`) GPU support via PyTorch Geometric.
+>
+> ### One install, three solvers
+>
+> | Solver | Paper | API in QQA4CO |
+> | --- | --- | --- |
+> | **CPRA** *(this paper)* | TMLR 2025 | `qqa.pignn.train_cpra_pi_gnn` |
+> | CRA-PI-GNN | NeurIPS 2024 | `qqa.pignn.train_cra_pi_gnn` |
+> | PQQA | ICLR 2025 | `qqa.anneal` |
+>
+> ### Quick start (replaces this repo's `experiment.ipynb`)
+>
+> ```bash
+> pip install "qqa[pignn]"
+> ```
+>
+> ```python
+> import qqa
+> from qqa.pignn import train_cpra_pi_gnn
+>
+> g = ...  # any networkx graph
+> base = qqa.MaximumIndependentSet(g, penalty=2.0)
+>
+> # Penalty diversification — one solution per penalty in a single run.
+> result = train_cpra_pi_gnn(
+>     base,
+>     num_replicas=4,
+>     replica_problems=[qqa.MaximumIndependentSet(g, penalty=p)
+>                       for p in [1.5, 2.0, 2.5, 3.0]],
+> )
+> for rec in result.score["extra"]["replicas"]:
+>     print(rec["replica"], rec["obj"], rec["sol"].sum().item())
+> ```
+>
+> ```bash
+> # Same thing from the command line:
+> qqa solve --problem mis --backend cpra --size 200 \
+>           --cpra-num-replicas 4 --cpra-penalty-levels 1.5,2.0,2.5,3.0 \
+>           --epochs 5000 --learning-rate 1e-3 \
+>           --pignn-init-reg-param -2 --pignn-annealing-rate 5e-4
+> ```
+>
+> A walkthrough notebook lives at
+> [`QQA4CO/notebooks/cpra_pignn_example.ipynb`](https://github.com/Yuma-Ichikawa/QQA4CO/blob/main/notebooks/cpra_pignn_example.ipynb).
+>
+> ### What stays here
+>
+> This standalone repository is **frozen** as the canonical reference for
+> the published TMLR 2025 experiments — `experiment.ipynb` and the
+> reported numbers reproduce exactly as in the paper. It remains usable
+> as-is, but **is not the recommended starting point for new work**.
+
+---
+
 This repository provides code associated with the TMLR paper:
 
 **Continuous Parallel Relaxation for Finding Diverse Solutions in Combinatorial Optimization Problems**  
